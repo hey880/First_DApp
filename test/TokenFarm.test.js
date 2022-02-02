@@ -62,4 +62,34 @@ contract('TokenFarm', ([owner, investor]) => {
             assert.equal(balance, tokens('1000000'))
         })
     })
+
+    describe('Farming tokens', async () => {
+        it('rewards investors for staking mDai tokens', async () => {
+            let result
+            //investor들이 입금(staking) 하기 전의 잔액을 체크
+            result = await daiToken.balanceOf(investor)
+            assert.equal(result.toString(), tokens('100'), 'investor Mock DAI wallet balance correct before staking')
+
+            // Stake Mock DAI Tokens
+            // tokenFarm이 100 dai token을 investor의 지갑에서 가져가는 걸 승인
+            // 이 approve 함수는 DaiToken.sol에서 확인할 수 있음
+            // 첫번째 매개변수는 spender, 두번째 매개변수는 value
+            await daiToken.approve(tokenFarm.address, tokens('100'), { from: investor })
+            await tokenFarm.stakeTokens(tokens('100'), { from: investor })
+
+            // Check staking result
+            result = await daiToken.balanceOf(investor)
+            assert.equal(result.toString(), tokens('0'), 'investor Mock DAI wallet balance correct after staking')
+
+            result = await daiToken.balanceOf(tokenFarm.address)
+            assert.equal(result.toString(), tokens('100'), 'tokenFarm Mock DAI wallet balance correct after staking')
+
+            result = await tokenFarm.stakingBalance(investor)
+            assert.equal(result.toString(), tokens('100'), 'investor staking balance correct after staking')
+
+            result = await tokenFarm.isStaking(investor)
+            assert.equal(result.toString(), 'true', 'investor staking status correct after staking')
+        })
+        
+    }) 
 })
